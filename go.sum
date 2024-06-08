@@ -285,8 +285,8 @@ github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVM
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
-github.com/virzz/captcha v0.1.2 h1:cXivRHHyisiLNLw9lpwKwiHV3mbTC4YstATyShofMjg=
-github.com/virzz/captcha v0.1.2/go.mod h1:mXQwBFsoGm60FeB+/SK7BDSKoalqxK0xac3nbEF6SxE=
+github.com/virzz/captcha v0.1.3 h1:vVKiSnBNyfIWkZPeN/LhmYj1sqwIfFJU51cBl7BN9dY=
+github.com/virzz/captcha v0.1.3/go.mod h1:mXQwBFsoGm60FeB+/SK7BDSKoalqxK0xac3nbEF6SxE=
 github.com/virzz/logger v0.2.5 h1:RMi/o2RrttWpAJ3yp8nMpHHjLPuch3EuFXaVf4DzkAg=
 github.com/virzz/logger v0.2.5/go.mod h1:Ddjg8yMEdS5XUL3S/rn5l6WtnE3x5OhIMqF5RTgvc8M=
 github.com/virzz/vlog v0.0.0-20240402104127-a8c808c845a2 h1:5xYuSmkcWgVwpd6TEeX7GiZ8aU3doPZgahUBkXFFcpU=
