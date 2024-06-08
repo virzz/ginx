@@ -12,7 +12,7 @@ require (
 	github.com/penglongli/gin-metrics v0.1.10
 	github.com/redis/go-redis/v9 v9.5.2
 	github.com/spf13/pflag v1.0.5
-	github.com/virzz/captcha v0.1.2
+	github.com/virzz/captcha v0.1.3
 	github.com/virzz/vlog v0.0.0-20240402104127-a8c808c845a2
 )
 
