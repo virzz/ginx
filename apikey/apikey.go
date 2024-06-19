@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -27,11 +28,11 @@ var log *slog.Logger
 type APIKey interface {
 	Token() string
 	Values() map[string]any
-	Get(key string) any
-	Set(key string, val any)
-	Delete(key string)
+	Get(string) any
+	Set(string, any)
+	Delete(string)
 	Clear() error
-	Save() error
+	Save(...time.Duration) error
 }
 
 type session struct {
@@ -48,9 +49,11 @@ func (s *session) Set(key string, val any) { s.Data().Values[key] = val }
 func (s *session) Delete(key string)       { delete(s.Data().Values, key) }
 func (s *session) Token() string           { return s.Data().Token }
 func (s *session) Values() map[string]any  { return s.Data().Values }
-func (s *session) Save() error             { return s.store.Save(s.ctx, s.data) }
 func (s *session) Clear() error            { return s.store.Clear(s.data) }
 func (s *session) Roles() []string         { return s.Data().Values["roles"].([]string) }
+func (s *session) Save(lifetime ...time.Duration) error {
+	return s.store.Save(s.ctx, s.data, lifetime...)
+}
 func (s *session) HasRole(role string) bool {
 	roles, ok := s.Get("roles").([]string)
 	return ok && slices.Contains(roles, role)
@@ -100,18 +103,35 @@ func AuthedMW(c *gin.Context) {
 		c.AbortWithStatusJSON(200, rsp.C(code.TokenInvalid))
 		return
 	}
-	if sess.Data(); sess.isNil {
+	data := sess.Data()
+	if sess.isNil {
 		c.AbortWithStatusJSON(200, rsp.C(code.TokenExpired))
 		return
 	}
-	if v, ok := sess.Get("id").(string); !ok || v == "" {
+	if v, ok := data.Values["id"].(string); !ok || v == "" {
 		c.AbortWithStatusJSON(200, rsp.C(code.Forbidden))
 		return
 	}
-	for k, v := range sess.Values() {
+	for k, v := range data.Values {
 		c.Set(k, v)
 	}
+	if v, ok := data.Values["roles"]; ok {
+		if vv, ok := v.([]string); ok {
+			if slices.Contains(vv, "admin") {
+				c.Set("is_admin", true)
+			}
+		}
+	}
 	c.Next()
+}
+
+func IsRole(c *gin.Context, role string) bool {
+	if v, ok := c.Get("roles"); ok {
+		if vv, ok := v.([]string); ok {
+			return slices.Contains(vv, role)
+		}
+	}
+	return false
 }
 
 func AuthRoleMW(roles ...string) gin.HandlerFunc {
