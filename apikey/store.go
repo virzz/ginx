@@ -10,7 +10,7 @@ import (
 
 type Store interface {
 	Get(context.Context, *Data) error
-	Save(context.Context, *Data) error
+	Save(context.Context, *Data, ...time.Duration) error
 	Clear(*Data) error
 }
 
@@ -51,9 +51,11 @@ func NewRedisStore(opts ...Option) (*RedisStore, error) {
 	return rs, rs.client.Ping(context.Background()).Err()
 }
 
-func (s *RedisStore) Get(ctx context.Context, v *Data) error  { return s.load(ctx, v) }
-func (s *RedisStore) Save(ctx context.Context, v *Data) error { return s.save(ctx, v) }
-func (s *RedisStore) Clear(v *Data) error                     { return s.delete(context.Background(), v) }
+func (s *RedisStore) Get(ctx context.Context, v *Data) error { return s.load(ctx, v) }
+func (s *RedisStore) Save(ctx context.Context, v *Data, lifetime ...time.Duration) error {
+	return s.save(ctx, v, lifetime...)
+}
+func (s *RedisStore) Clear(v *Data) error { return s.delete(context.Background(), v) }
 
 // func (s *RedisStore) Close() error                            { return s.client.Close() }
 
@@ -65,7 +67,7 @@ func (s *RedisStore) load(ctx context.Context, v *Data) error {
 	return s.serializer.Deserialize(buf, v)
 }
 
-func (s *RedisStore) save(ctx context.Context, v *Data) error {
+func (s *RedisStore) save(ctx context.Context, v *Data, lifetime ...time.Duration) error {
 	if v.Token == "" {
 		v.New()
 	}
@@ -74,7 +76,11 @@ func (s *RedisStore) save(ctx context.Context, v *Data) error {
 		log.Error("Failed to serialize token data", "err", err.Error())
 		return err
 	}
-	return s.client.Set(ctx, s.keyPrefix+v.Token, buf, time.Duration(s.maxAge)*time.Second).Err()
+	maxAge := time.Duration(s.maxAge) * time.Second
+	if len(lifetime) > 0 {
+		maxAge = lifetime[0]
+	}
+	return s.client.Set(ctx, s.keyPrefix+v.Token, buf, maxAge).Err()
 }
 
 func (s *RedisStore) delete(ctx context.Context, v *Data) error {
