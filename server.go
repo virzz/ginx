@@ -72,16 +72,18 @@ func New(prefix ...string) (*http.Server, error) {
 	engine.Use(cors.New(c))
 
 	// Session
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", Conf.Store.Addr, Conf.Store.Port),
-		DB:       Conf.Store.DB,
-		Password: Conf.Store.Pass,
-	})
-	store, err := apikey.NewRedisStore(apikey.WithClient(client))
-	if err != nil {
-		panic(err)
+	if Conf.Store.Addr != "" {
+		client := redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("%s:%d", Conf.Store.Addr, Conf.Store.Port),
+			DB:       Conf.Store.DB,
+			Password: Conf.Store.Pass,
+		})
+		store, err := apikey.NewRedisStore(apikey.WithClient(client))
+		if err != nil {
+			panic(err)
+		}
+		engine.Use(apikey.Init(store))
 	}
-	engine.Use(apikey.Init(store))
 
 	// Register Router
 	var api *gin.RouterGroup
