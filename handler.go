@@ -15,3 +15,7 @@ func LogoutHandler(c *gin.Context) {
 	}
 	c.JSON(200, rsp.OK())
 }
+
+func CodesHandler(c *gin.Context) {
+	c.JSON(200, rsp.S(code.Codes))
+}
