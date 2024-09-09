@@ -17,20 +17,17 @@ import (
 	"github.com/virzz/vlog"
 
 	"github.com/virzz/ginx/apikey"
-	"github.com/virzz/ginx/code"
-	"github.com/virzz/ginx/rsp"
 )
 
-func CodesHandler(c *gin.Context) {
-	c.JSON(200, rsp.S(code.Codes))
-}
+var engine = gin.New()
+
+func R() *gin.Engine { return engine }
 
 func New(prefix ...string) (*http.Server, error) {
 	if Conf == nil {
 		return nil, fmt.Errorf("HTTP Config is nil")
 	}
-	engine := gin.New()
-
+	
 	f, _ := os.Create(filepath.Join("logs", "gin.log"))
 	if Conf.Debug {
 		gin.SetMode(gin.DebugMode)
@@ -85,6 +82,11 @@ func New(prefix ...string) (*http.Server, error) {
 		engine.Use(apikey.Init(store))
 	}
 
+	// Register Before Middleware
+	if len(mwBefore) > 0 {
+		engine.Use(mwBefore...)
+	}
+
 	// Register Router
 	var api *gin.RouterGroup
 	if len(prefix) > 0 {
@@ -92,10 +94,15 @@ func New(prefix ...string) (*http.Server, error) {
 	} else {
 		api = engine.Group("/")
 	}
-	api.POST("/errcode", CodesHandler)
-	api.POST("/captcha", CaptchaHandler)
+	api.POST("/api/errcode", CodesHandler)
+	api.POST("/api/captcha", CaptchaHandler)
 	for _, register := range Routers {
 		register(api)
+	}
+
+	// Register After Middleware
+	if len(mwAfter) > 0 {
+		engine.Use(mwAfter...)
 	}
 
 	addr := fmt.Sprintf("%s:%d", Conf.Addr, Conf.Port)
