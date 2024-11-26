@@ -19,7 +19,7 @@ import (
 	"github.com/virzz/ginx/apikey"
 )
 
-var engine = gin.New()
+var engine *gin.Engine
 
 func R() *gin.Engine { return engine }
 
@@ -27,6 +27,8 @@ func New(prefix ...string) (*http.Server, error) {
 	if Conf == nil {
 		return nil, fmt.Errorf("HTTP Config is nil")
 	}
+
+	engine = gin.New()
 	
 	f, _ := os.Create(filepath.Join("logs", "gin.log"))
 	if Conf.Debug {
