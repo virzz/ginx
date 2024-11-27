@@ -29,7 +29,7 @@ func New(prefix ...string) (*http.Server, error) {
 	}
 
 	engine = gin.New()
-	
+
 	f, _ := os.Create(filepath.Join("logs", "gin.log"))
 	if Conf.Debug {
 		gin.SetMode(gin.DebugMode)
@@ -71,7 +71,7 @@ func New(prefix ...string) (*http.Server, error) {
 	engine.Use(cors.New(c))
 
 	// Session
-	if Conf.Store.Addr != "" {
+	if Conf.Store.Enabled {
 		client := redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%d", Conf.Store.Addr, Conf.Store.Port),
 			DB:       Conf.Store.DB,
