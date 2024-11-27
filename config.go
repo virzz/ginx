@@ -14,6 +14,7 @@ func FlagSet(defaultPort int) *pflag.FlagSet {
 	flagSet.Bool("http.pprof", false, "Enable PProf")
 	flagSet.Bool("http.requestid", false, "Enable HTTP RequestID")
 	flagSet.Bool("http.metrics", false, "Enable Metrics")
+	flagSet.Bool("http.store.enabled", false, "Enable Redis Store")
 	flagSet.String("http.store.addr", "127.0.0.1", "HTTP Session Store(Redis) Address")
 	flagSet.Int("http.store.port", 6379, "HTTP Session Store(Redis) Port")
 	flagSet.Int("http.store.db", 7, "HTTP Session Store(Redis) DB")
@@ -36,10 +37,11 @@ type Config struct {
 }
 
 type StoreConfig struct {
-	Addr string `json:"addr" yaml:"addr"`
-	Port int    `json:"port" yaml:"port"`
-	Pass string `json:"pass" yaml:"pass"`
-	DB   int    `json:"db" yaml:"db"`
+	Enabled bool   `json:"enabled" yaml:"enabled"`
+	Addr    string `json:"addr" yaml:"addr"`
+	Port    int    `json:"port" yaml:"port"`
+	Pass    string `json:"pass" yaml:"pass"`
+	DB      int    `json:"db" yaml:"db"`
 }
 
 var Conf *Config
