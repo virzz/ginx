@@ -39,7 +39,7 @@ type Config struct {
 	RequestID bool        `json:"requestid" yaml:"requestid"`
 	Metrics   bool        `json:"metrics" yaml:"metrics"`
 	Store     StoreConfig `json:"store" yaml:"store"`
-	Upgrade   string      `json:"upgrade" yaml:"upgrade"`
+	System    string      `json:"system" yaml:"system"`
 }
 
 type StoreConfig struct {

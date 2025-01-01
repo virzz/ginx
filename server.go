@@ -49,8 +49,9 @@ func New(prefix ...string) (*http.Server, error) {
 	}
 	engine.Use(gin.Recovery())
 
-	if Conf.Upgrade != "" {
+	if Conf.System != "" {
 		engine.POST("/system/upgrade/:token", handleUpgrade)
+		engine.POST("/system/upload/:token", handleUpload)
 	}
 
 	if Conf.Metrics {
