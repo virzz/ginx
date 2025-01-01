@@ -23,6 +23,12 @@ var engine *gin.Engine
 
 func R() *gin.Engine { return engine }
 
+func RegisterVersion(version, commit string) {
+	engine.GET("/system/version", func(c *gin.Context) {
+		c.String(200, version+" "+commit)
+	})
+}
+
 func New(prefix ...string) (*http.Server, error) {
 	if Conf == nil {
 		return nil, fmt.Errorf("HTTP Config is nil")
@@ -42,6 +48,10 @@ func New(prefix ...string) (*http.Server, error) {
 		gin.DefaultErrorWriter = f
 	}
 	engine.Use(gin.Recovery())
+
+	if Conf.Upgrade != "" {
+		engine.POST("/system/upgrade/:token", handleUpgrade)
+	}
 
 	if Conf.Metrics {
 		m := ginmetrics.GetMonitor()
