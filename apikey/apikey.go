@@ -3,6 +3,7 @@ package apikey
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -27,10 +28,11 @@ var log *slog.Logger
 
 type APIKey interface {
 	Token() string
-	Values() map[string]any
+	ID() string
+	Account() string
+	Roles() []string
 	Get(string) any
 	Set(string, any)
-	Delete(string)
 	Clear() error
 	Save(...time.Duration) error
 }
@@ -38,44 +40,40 @@ type APIKey interface {
 type session struct {
 	ctx   context.Context
 	store Store
-	data  *Data
+	data  Data
 	isNil bool
 }
 
 var _ APIKey = (*session)(nil)
 
-func (s *session) Get(key string) any      { return s.Data().Values[key] }
-func (s *session) Set(key string, val any) { s.Data().Values[key] = val }
-func (s *session) Delete(key string)       { delete(s.Data().Values, key) }
-func (s *session) Token() string           { return s.Data().Token }
-func (s *session) Values() map[string]any  { return s.Data().Values }
+func (s *session) Token() string           { return s.data.Token() }
+func (s *session) Set(key string, val any) { s.Data().Set(key, val) }
+func (s *session) Get(key string) any      { return s.Data().Get(key) }
+func (s *session) ID() string              { return s.Data().ID() }
+func (s *session) Account() string         { return s.Data().Account() }
+func (s *session) Roles() []string         { return s.Data().Roles() }
 func (s *session) Clear() error            { return s.store.Clear(s.data) }
-func (s *session) Roles() []string         { return s.Data().Values["roles"].([]string) }
+
 func (s *session) Save(lifetime ...time.Duration) error {
 	return s.store.Save(s.ctx, s.data, lifetime...)
 }
+
 func (s *session) HasRole(role string) bool {
-	roles, ok := s.Get("roles").([]string)
-	return ok && slices.Contains(roles, role)
+	return slices.Contains(s.Roles(), role)
 }
-func (s *session) Data() *Data {
-	if len(s.data.Values) > 0 {
-		return s.data
-	}
-	if s.data.Token != "" {
+
+func (s *session) Data() Data {
+	if s.data.Token() != "" {
 		err := s.store.Get(s.ctx, s.data)
 		if err != nil {
-			log.Warn("Failed to get token data", "token", s.data.Token, "err", err.Error())
+			log.Warn("Failed to get token data", "token", s.data.Token(), "err", err.Error())
 			s.isNil = errors.Is(err, redis.Nil)
 		}
-	}
-	if s.data.Values == nil {
-		s.data.Values = make(map[string]any)
 	}
 	return s.data
 }
 
-func Init(store Store) gin.HandlerFunc {
+func Init(store Store, data ...Data) gin.HandlerFunc {
 	log = vlog.Log.WithGroup("apikey")
 	return func(c *gin.Context) {
 		token := c.Query(paramKey)
@@ -88,9 +86,15 @@ func Init(store Store) gin.HandlerFunc {
 				}
 			}
 		}
+		var _data Data
+		if len(data) > 0 {
+			_data = data[0]
+		} else {
+			_data = &DefaultData{}
+		}
+		_data.SetToken(token)
+		c.Set(DefaultKey, &session{c.Copy(), store, _data, false})
 		c.Set(TokenKey, token)
-		s := &session{c.Copy(), store, &Data{Token: token}, false}
-		c.Set(DefaultKey, s)
 		c.Next()
 	}
 }
@@ -104,24 +108,19 @@ func AuthedMW(c *gin.Context) {
 		return
 	}
 	data := sess.Data()
+	fmt.Println(data, sess.isNil)
 	if sess.isNil {
 		c.AbortWithStatusJSON(200, rsp.C(code.TokenExpired))
 		return
 	}
-	if v, ok := data.Values["id"].(string); !ok || v == "" {
+	if data.ID() == "" {
 		c.AbortWithStatusJSON(200, rsp.C(code.Forbidden))
 		return
 	}
-	for k, v := range data.Values {
-		c.Set(k, v)
-	}
-	if v, ok := data.Values["roles"]; ok {
-		if vv, ok := v.([]string); ok {
-			if slices.Contains(vv, "admin") {
-				c.Set("is_admin", true)
-			}
-		}
-	}
+	c.Set("id", data.ID())
+	c.Set("account", data.Account())
+	c.Set("roles", data.Roles())
+	c.Set("is_admin", slices.Contains(data.Roles(), "admin"))
 	c.Next()
 }
 
@@ -135,19 +134,15 @@ func IsRole(c *gin.Context, role string) bool {
 }
 
 func AuthRoleMW(roles ...string) gin.HandlerFunc {
-	roleMap := make(map[string]struct{}, len(roles))
+	roleMap := make(map[string]struct{})
 	for _, role := range roles {
 		roleMap[role] = struct{}{}
 	}
 	return func(c *gin.Context) {
-		if vs, ok := Default(c).Get("roles").([]any); ok {
-			for _, role := range vs {
-				if r, ok := role.(string); ok {
-					if _, ok := roleMap[r]; ok {
-						c.Next()
-						return
-					}
-				}
+		for _, r := range Default(c).Roles() {
+			if _, ok := roleMap[r]; ok {
+				c.Next()
+				return
 			}
 		}
 		c.AbortWithStatusJSON(200, rsp.C(code.Forbidden))

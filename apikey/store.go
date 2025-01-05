@@ -9,16 +9,15 @@ import (
 )
 
 type Store interface {
-	Get(context.Context, *Data) error
-	Save(context.Context, *Data, ...time.Duration) error
-	Clear(*Data) error
+	Get(context.Context, Data) error
+	Save(context.Context, Data, ...time.Duration) error
+	Clear(Data) error
 }
 
 type RedisStore struct {
-	client     redis.UniversalClient // client to connect to redis
-	keyPrefix  string                // key prefix with which the session will be stored
-	serializer Serializer            // session serializer
-	maxAge     int
+	client    redis.UniversalClient // client to connect to redis
+	keyPrefix string                // key prefix with which the session will be stored
+	maxAge    int
 }
 
 type Option func(*RedisStore)
@@ -26,21 +25,19 @@ type Option func(*RedisStore)
 func WithClient(client redis.UniversalClient) func(*RedisStore) {
 	return func(rs *RedisStore) { rs.client = client }
 }
+
 func WithKeyPrefix(keyPrefix string) func(*RedisStore) {
 	return func(rs *RedisStore) { rs.keyPrefix = keyPrefix }
 }
+
 func WithMaxAge(maxAge int) func(*RedisStore) {
 	return func(rs *RedisStore) { rs.maxAge = maxAge }
-}
-func WithSerializer(serializer Serializer) func(*RedisStore) {
-	return func(rs *RedisStore) { rs.serializer = serializer }
 }
 
 func NewRedisStore(opts ...Option) (*RedisStore, error) {
 	rs := &RedisStore{
-		keyPrefix:  "ginx_apikey_",
-		serializer: SonicSerializer{},
-		maxAge:     3 * 24 * 3600,
+		keyPrefix: "ginx_apikey_",
+		maxAge:    3 * 24 * 3600,
 	}
 	for _, opt := range opts {
 		opt(rs)
@@ -51,44 +48,30 @@ func NewRedisStore(opts ...Option) (*RedisStore, error) {
 	return rs, rs.client.Ping(context.Background()).Err()
 }
 
-func (s *RedisStore) Get(ctx context.Context, v *Data) error { return s.load(ctx, v) }
-func (s *RedisStore) Save(ctx context.Context, v *Data, lifetime ...time.Duration) error {
-	return s.save(ctx, v, lifetime...)
+func (s *RedisStore) Clear(v Data) error {
+	return s.client.Del(context.Background(), s.keyPrefix+v.Token()).Err()
 }
-func (s *RedisStore) Clear(v *Data) error { return s.delete(context.Background(), v) }
 
-// func (s *RedisStore) Close() error                            { return s.client.Close() }
-
-func (s *RedisStore) load(ctx context.Context, v *Data) error {
-	buf, err := s.client.Get(ctx, s.keyPrefix+v.Token).Bytes()
-	if err != nil {
-		return err
+func (s *RedisStore) Get(ctx context.Context, v Data) error {
+	x := s.client.HGetAll(ctx, s.keyPrefix+v.Token())
+	if len(x.Val()) == 0 {
+		return redis.Nil
 	}
-	return s.serializer.Deserialize(buf, v)
+	return x.Scan(v)
 }
 
-func (s *RedisStore) save(ctx context.Context, v *Data, lifetime ...time.Duration) error {
-	if v.Token == "" {
+func (s *RedisStore) Save(ctx context.Context, v Data, lifetime ...time.Duration) error {
+	if v.Token() == "" {
 		v.New()
-	}
-	buf, err := s.serializer.Serialize(v)
-	if err != nil {
-		log.Error("Failed to serialize token data", "err", err.Error())
-		return err
 	}
 	maxAge := time.Duration(s.maxAge) * time.Second
 	if len(lifetime) > 0 {
 		maxAge = lifetime[0]
 	}
-	return s.client.Set(ctx, s.keyPrefix+v.Token, buf, maxAge).Err()
-}
-
-func (s *RedisStore) delete(ctx context.Context, v *Data) error {
-	v.Values = nil
-	err := s.client.Del(ctx, s.keyPrefix+v.Token).Err()
-	if err != nil {
-		log.Error("Failed to delete token data", "err", err.Error())
+	key := s.keyPrefix + v.Token()
+	if err := s.client.HSet(ctx, key, v).Err(); err != nil {
+		log.Error("Failed to hset", "key", key, "err", err.Error())
 		return err
 	}
-	return nil
+	return s.client.Expire(ctx, key, maxAge).Err()
 }
