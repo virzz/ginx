@@ -12,6 +12,7 @@ require (
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/virzz/captcha v0.1.3
+	github.com/virzz/utils v0.0.0-20240809220433-90f6ff716d6d
 	github.com/virzz/vlog v0.0.0-20241114111348-fcfde98ab081
 )
 
