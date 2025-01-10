@@ -107,8 +107,11 @@ func New(prefix ...string) (*http.Server, error) {
 	} else {
 		api = engine.Group("/")
 	}
+
+	api.POST("/health", HealthCheckHandler)
 	api.POST("/api/errcode", CodesHandler)
 	api.POST("/api/captcha", CaptchaHandler)
+
 	for _, register := range Routers {
 		register(api)
 	}

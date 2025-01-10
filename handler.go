@@ -19,3 +19,7 @@ func LogoutHandler(c *gin.Context) {
 func CodesHandler(c *gin.Context) {
 	c.JSON(200, rsp.S(code.Codes))
 }
+
+func HealthCheckHandler(c *gin.Context) {
+	c.Status(200)
+}
