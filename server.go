@@ -36,7 +36,11 @@ func New(prefix ...string) (*http.Server, error) {
 
 	engine = gin.New()
 
-	f, _ := os.Create(filepath.Join("logs", "gin.log"))
+	f, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		vlog.Warn("Failed to open gin log file", "err", err.Error())
+		return nil, err
+	}
 	if Conf.Debug {
 		gin.SetMode(gin.DebugMode)
 		gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
@@ -53,6 +57,8 @@ func New(prefix ...string) (*http.Server, error) {
 		engine.POST("/system/upgrade/:token", handleUpgrade)
 		engine.POST("/system/upload/:token", handleUpload)
 	}
+
+	engine.Any("/health", HealthCheckHandler)
 
 	if Conf.Metrics {
 		m := ginmetrics.GetMonitor()
@@ -107,10 +113,6 @@ func New(prefix ...string) (*http.Server, error) {
 	} else {
 		api = engine.Group("/")
 	}
-
-	api.POST("/health", HealthCheckHandler)
-	api.POST("/api/errcode", CodesHandler)
-	api.POST("/api/captcha", CaptchaHandler)
 
 	for _, register := range Routers {
 		register(api)
