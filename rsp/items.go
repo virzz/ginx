@@ -18,12 +18,13 @@ func Item[T IntX](total T, items any) Rsp {
 func ItemExt[T IntX](total T, items any, ext any) Rsp {
 	return Rsp{APICode: code.Success, Data: &Items{Items: items, Total: int64(total), Ext: ext}}
 }
-func ItemCode(c *code.APICode) Rsp {
+func ItemCode(c code.APICode) Rsp {
 	return Rsp{APICode: c, Data: &Items{Items: []struct{}{}, Total: 0}}
 }
 func ItemNone() Rsp { return ItemCode(code.NotFound) }
 func MItem[T IntX](total T, items any, msg string, ext ...any) Rsp {
-	r := Rsp{APICode: code.Success.M(msg), Data: &Items{Items: items, Total: int64(total)}}
+	r := Rsp{APICode: code.Success, Data: &Items{Items: items, Total: int64(total)}}
+	r.WithMsg(msg)
 	if len(ext) > 0 {
 		r.Data.(*Items).Ext = ext[0]
 	}

@@ -7,11 +7,11 @@ import (
 )
 
 type Rsp struct {
-	*code.APICode
+	code.APICode
 	Data any `json:"data"`
 }
 
-func (r *Rsp) WithCode(c *code.APICode) *Rsp {
+func (r *Rsp) WithCode(c code.APICode) *Rsp {
 	r.APICode = c
 	return r
 }
@@ -33,7 +33,7 @@ func (r *Rsp) WithItemExt(total int64, items any, ext any) *Rsp {
 }
 
 func New() *Rsp                    { return &Rsp{} }
-func C(c *code.APICode) *Rsp       { return &Rsp{APICode: c} }
+func C(c code.APICode) *Rsp        { return &Rsp{APICode: c} }
 func S(data any) *Rsp              { return &Rsp{APICode: code.Success, Data: data} }
 func M(msg string) *Rsp            { return (&Rsp{APICode: code.Success}).WithMsg(msg) }
 func SM(data any, msg string) *Rsp { return (&Rsp{APICode: code.Success, Data: data}).WithMsg(msg) }
@@ -41,7 +41,7 @@ func SM(data any, msg string) *Rsp { return (&Rsp{APICode: code.Success, Data: d
 func OK() *Rsp            { return &Rsp{APICode: code.Success} }
 func UnImplemented() *Rsp { return &Rsp{APICode: code.UnImplemented} }
 
-func E(c *code.APICode, msg any) *Rsp {
+func E(c code.APICode, msg any) *Rsp {
 	switch m := msg.(type) {
 	case string:
 		return (&Rsp{APICode: c}).WithMsg(m)

@@ -3,9 +3,10 @@ package apikey
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"io"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 )
 
 func generateRandomKey() string {

@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-var Codes = map[int]*APICode{}
+var Codes = map[int]APICode{}
 
 var lock sync.Mutex
 
@@ -23,12 +23,12 @@ func (a *APICode) M(msg string) *APICode {
 	return a
 }
 
-func New(system SystemCode, biz BizCode, code int, msg string) *APICode {
+func New(system SystemCode, biz BizCode, code int, msg string) APICode {
 	return NewCode(code+int(biz)*1000+int(system)*1000*100, msg)
 }
 
-func NewCode(code int, msg string) *APICode {
-	c := &APICode{Code: code, Msg: msg}
+func NewCode(code int, msg string) APICode {
+	c := APICode{Code: code, Msg: msg}
 	lock.Lock()
 	if _, ok := Codes[code]; ok {
 		panic("code exists")

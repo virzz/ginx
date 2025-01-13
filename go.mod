@@ -1,12 +1,15 @@
 module github.com/virzz/ginx
 
-go 1.22.3
+go 1.23
+
+toolchain go1.23.4
 
 require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/pprof v1.5.2
 	github.com/gin-contrib/requestid v1.0.4
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-json-experiment/json v0.0.0-20250108213703-50a1ba2c17a5
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/penglongli/gin-metrics v0.1.12
 	github.com/redis/go-redis/v9 v9.7.0
