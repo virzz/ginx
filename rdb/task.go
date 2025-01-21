@@ -21,9 +21,9 @@ type Task struct {
 
 func NewTask(taskKey string, maxRetryCount int64) *Task {
 	return &Task{
-		delayedTasksKey:    "delayed_" + taskKey,
-		processingTasksKey: "processing_" + taskKey,
-		retryTasksKey:      "retry_count_" + taskKey + "_",
+		delayedTasksKey:    "delayed:" + taskKey,
+		processingTasksKey: "processing:" + taskKey,
+		retryTasksKey:      "retry:" + taskKey,
 		maxRetryCount:      maxRetryCount,
 	}
 }
@@ -114,12 +114,4 @@ func (t *Task) List(ctx context.Context) (TaskItems, error) {
 		items = append(items, &TaskItem{Key: v.Member.(string), Score: int64(v.Score)})
 	}
 	return items, nil
-}
-
-func (t *Task) ListString(ctx context.Context) string {
-	r, err := t.List(ctx)
-	if err != nil {
-		return err.Error()
-	}
-	return r.String()
 }
