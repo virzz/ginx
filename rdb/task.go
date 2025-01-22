@@ -33,7 +33,7 @@ func (t *Task) Add(ctx context.Context, prefix, key string, executeAt int64) err
 	if executeAt <= now {
 		executeAt += now
 	}
-	return rdb.ZAdd(ctx, t.delayedTasksKey, redis.Z{Score: float64(executeAt), Member: prefix + "_" + key}).Err()
+	return rdb.ZAdd(ctx, t.delayedTasksKey, redis.Z{Score: float64(executeAt), Member: prefix + ":" + key}).Err()
 }
 
 func (t *Task) Process(ctx context.Context, f func(string) error) {
