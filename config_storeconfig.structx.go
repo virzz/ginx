@@ -2,8 +2,23 @@
 
 package ginx
 
-func (s *StoreConfig) WithEnabled(v bool) { s.Enabled = v }
-func (s *StoreConfig) WithAddr(v string)  { s.Addr = v }
-func (s *StoreConfig) WithPort(v int)     { s.Port = v }
-func (s *StoreConfig) WithPass(v string)  { s.Pass = v }
-func (s *StoreConfig) WithDB(v int)       { s.DB = v }
+func (s *StoreConfig) WithAddr(v string) *StoreConfig {
+	s.Addr = v
+	return s
+}
+func (s *StoreConfig) WithPort(v int) *StoreConfig {
+	s.Port = v
+	return s
+}
+func (s *StoreConfig) WithPass(v string) *StoreConfig {
+	s.Pass = v
+	return s
+}
+func (s *StoreConfig) WithDB(v int) *StoreConfig {
+	s.DB = v
+	return s
+}
+func (s *StoreConfig) WithEnabled(v bool) *StoreConfig {
+	s.Enabled = v
+	return s
+}

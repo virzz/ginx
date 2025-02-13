@@ -51,4 +51,7 @@ type Config struct {
 	RequestID bool        `json:"requestid" yaml:"requestid"`
 	Metrics   bool        `json:"metrics" yaml:"metrics"`
 	Store     StoreConfig `json:"store" yaml:"store"`
+
+	version string `json:"-" yaml:"-"`
+	commit  string `json:"-" yaml:"-"`
 }
