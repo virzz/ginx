@@ -19,7 +19,7 @@ import (
 	"github.com/virzz/ginx/apikey"
 )
 
-func New(conf *Config) (*gin.Engine, error) {
+func New(conf *Config) (*http.Server, error) {
 	logFile, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		vlog.Warn("Failed to open gin log file", "err", err.Error())
@@ -113,19 +113,11 @@ func New(conf *Config) (*gin.Engine, error) {
 		}
 	})
 
-	return engine, nil
-}
-
-func NewServer(conf *Config) (*http.Server, *gin.Engine, error) {
 	addr := fmt.Sprintf("%s:%d", conf.Addr, conf.Port)
 	if conf.Endpoint != "" {
 		vlog.Info("HTTP Server Listening on : " + conf.Endpoint)
 	} else {
 		vlog.Info("HTTP Server Listening on : " + addr)
 	}
-	engine, err := New(conf)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &http.Server{Addr: addr, Handler: engine}, engine, nil
+	return &http.Server{Addr: addr, Handler: engine}, nil
 }
