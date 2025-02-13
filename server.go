@@ -29,19 +29,18 @@ func RegisterVersion(version, commit string) {
 	})
 }
 
-func New(prefix ...string) (*http.Server, error) {
-	if Conf == nil {
-		return nil, fmt.Errorf("HTTP Config is nil")
+func New(conf *Config) (*http.Server, error) {
+	if engine != nil {
+		return nil, fmt.Errorf("HTTP Server already started")
 	}
-
-	engine = gin.New()
+	engine := gin.New()
 
 	f, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		vlog.Warn("Failed to open gin log file", "err", err.Error())
 		return nil, err
 	}
-	if Conf.Debug {
+	if conf.Debug {
 		gin.SetMode(gin.DebugMode)
 		gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 		gin.DefaultErrorWriter = io.MultiWriter(f, os.Stderr)
@@ -53,14 +52,14 @@ func New(prefix ...string) (*http.Server, error) {
 	}
 	engine.Use(gin.Recovery())
 
-	if Conf.System != "" {
-		engine.POST("/system/upgrade/:token", handleUpgrade)
-		engine.POST("/system/upload/:token", handleUpload)
+	if conf.System != "" {
+		engine.POST("/system/upgrade/:token", handleUpgrade(conf.System))
+		engine.POST("/system/upload/:token", handleUpload(conf.System))
 	}
 
-	engine.Any("/health", HealthCheckHandler)
+	engine.GET("/health", HealthCheckHandler)
 
-	if Conf.Metrics {
+	if conf.Metrics {
 		m := ginmetrics.GetMonitor()
 		m.SetMetricPath("/metrics")
 		m.SetSlowTime(10)
@@ -68,31 +67,31 @@ func New(prefix ...string) (*http.Server, error) {
 		m.Use(engine)
 	}
 
-	if Conf.Pprof {
+	if conf.Pprof {
 		pprof.Register(engine)
 	}
 
-	if Conf.RequestID {
+	if conf.RequestID {
 		engine.Use(requestid.New())
 	}
 
 	// CORS
 	c := cors.DefaultConfig()
-	c.AddAllowHeaders(Conf.Headers...)
-	if len(Conf.Origins) > 0 {
+	c.AddAllowHeaders(conf.Headers...)
+	if len(conf.Origins) > 0 {
 		c.AllowAllOrigins = false
-		c.AllowOrigins = Conf.Origins
+		c.AllowOrigins = conf.Origins
 	} else {
 		c.AllowAllOrigins = true
 	}
 	engine.Use(cors.New(c))
 
 	// Session
-	if Conf.Store.Enabled {
+	if conf.Store.Enabled {
 		client := redis.NewClient(&redis.Options{
-			Addr:     fmt.Sprintf("%s:%d", Conf.Store.Addr, Conf.Store.Port),
-			DB:       Conf.Store.DB,
-			Password: Conf.Store.Pass,
+			Addr:     fmt.Sprintf("%s:%d", conf.Store.Addr, conf.Store.Port),
+			DB:       conf.Store.DB,
+			Password: conf.Store.Pass,
 		})
 		store, err := apikey.NewRedisStore(apikey.WithClient(client))
 		if err != nil {
@@ -101,29 +100,22 @@ func New(prefix ...string) (*http.Server, error) {
 		engine.Use(apikey.Init(store))
 	}
 
+	// Register Router
+	api := engine.Group(conf.Prefix)
+
 	// Register Before Middleware
 	if len(mwBefore) > 0 {
-		engine.Use(mwBefore...)
+		api.Use(mwBefore...)
 	}
-
-	// Register Router
-	var api *gin.RouterGroup
-	if len(prefix) > 0 {
-		api = engine.Group(prefix[0])
-	} else {
-		api = engine.Group("/")
-	}
-
+	// Register Routers
 	for _, register := range Routers {
 		register(api)
 	}
-
 	// Register After Middleware
 	if len(mwAfter) > 0 {
-		engine.Use(mwAfter...)
+		api.Use(mwAfter...)
 	}
-
-	addr := fmt.Sprintf("%s:%d", Conf.Addr, Conf.Port)
+	addr := fmt.Sprintf("%s:%d", conf.Addr, conf.Port)
 	vlog.Info("HTTP Server Listening on : " + addr)
 	return &http.Server{Addr: addr, Handler: engine}, nil
 }

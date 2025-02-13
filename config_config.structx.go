@@ -11,6 +11,5 @@ func (s *Config) WithPprof(v bool)        { s.Pprof = v }
 func (s *Config) WithMetrics(v bool)      { s.Metrics = v }
 func (s *Config) WithOrigins(v []string)  { s.Origins = v }
 func (s *Config) WithDebug(v bool)        { s.Debug = v }
-func (s *Config) WithCaptcha(v bool)      { s.Captcha = v }
 func (s *Config) WithRequestID(v bool)    { s.RequestID = v }
 func (s *Config) WithStore(v StoreConfig) { s.Store = v }

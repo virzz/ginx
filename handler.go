@@ -16,10 +16,6 @@ func LogoutHandler(c *gin.Context) {
 	c.JSON(200, rsp.OK())
 }
 
-func ErrCodeHandler(c *gin.Context) {
-	c.JSON(200, rsp.S(code.Codes))
-}
+func ErrCodeHandler(c *gin.Context) { c.JSON(200, rsp.S(code.Codes)) }
 
-func HealthCheckHandler(c *gin.Context) {
-	c.Status(200)
-}
+func HealthCheckHandler(c *gin.Context) { c.Status(200) }

@@ -29,8 +29,5 @@ func CaptchaHandler(c *gin.Context) {
 }
 
 func CaptchaCheck(uuid, code string) bool {
-	if Conf != nil && Conf.Captcha {
-		return true
-	}
 	return captcha.CheckOk(uuid, code)
 }
