@@ -27,6 +27,16 @@ func FlagSet(defaultPort int) *pflag.FlagSet {
 	return flagSet
 }
 
+//go:generate structx -struct StoreConfig
+type StoreConfig struct {
+	Enabled bool   `json:"enabled" yaml:"enabled"`
+	Addr    string `json:"addr" yaml:"addr"`
+	Port    int    `json:"port" yaml:"port"`
+	Pass    string `json:"pass" yaml:"pass"`
+	DB      int    `json:"db" yaml:"db"`
+}
+
+//go:generate structx -struct Config
 type Config struct {
 	Endpoint  string      `json:"endpoint" yaml:"endpoint"`
 	Addr      string      `json:"addr" yaml:"addr"`
@@ -40,14 +50,6 @@ type Config struct {
 	Metrics   bool        `json:"metrics" yaml:"metrics"`
 	Store     StoreConfig `json:"store" yaml:"store"`
 	System    string      `json:"system" yaml:"system"`
-}
-
-type StoreConfig struct {
-	Enabled bool   `json:"enabled" yaml:"enabled"`
-	Addr    string `json:"addr" yaml:"addr"`
-	Port    int    `json:"port" yaml:"port"`
-	Pass    string `json:"pass" yaml:"pass"`
-	DB      int    `json:"db" yaml:"db"`
 }
 
 var Conf *Config
