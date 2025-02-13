@@ -104,6 +104,15 @@ func New(conf *Config) (*gin.Engine, error) {
 		api.Use(mwAfter...)
 	}
 
+	engine.NoRoute(func(c *gin.Context) {
+		buf, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			vlog.Error("404 Not Found", "method", c.Request.Method, "path", c.Request.RequestURI, "method", c.Request.Method)
+		} else {
+			vlog.Error("404 Not Found", "method", c.Request.Method, "path", c.Request.RequestURI, "body", string(buf))
+		}
+	})
+
 	return engine, nil
 }
 
