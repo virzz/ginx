@@ -20,31 +20,31 @@ import (
 )
 
 func New(conf *Config) (*http.Server, error) {
+	os.MkdirAll("logs", 0755)
 	logFile, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		vlog.Warn("Failed to open gin log file", "err", err.Error())
 		return nil, err
 	}
 
-	engine := gin.New()
-
 	if conf.Debug {
 		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+
+	if conf.Debug {
 		gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
 		gin.DefaultErrorWriter = io.MultiWriter(logFile, os.Stderr)
 		engine.Use(gin.Logger())
 	} else {
-		gin.SetMode(gin.ReleaseMode)
 		gin.DefaultWriter = logFile
 		gin.DefaultErrorWriter = logFile
 	}
-	engine.Use(gin.Recovery())
 
-	if conf.System != "" {
-		engine.POST("/system/upgrade/:token", handleUpgrade(conf.System))
-		engine.POST("/system/upload/:token", handleUpload(conf.System))
-	}
-	engine.GET("/system/version", func(c *gin.Context) { c.String(200, conf.version+" "+conf.commit) })
+	engine.GET("/version", func(c *gin.Context) { c.String(200, conf.version+" "+conf.commit) })
 	engine.GET("/health", func(c *gin.Context) { c.Status(200) })
 
 	if conf.Metrics {
@@ -55,8 +55,13 @@ func New(conf *Config) (*http.Server, error) {
 		m.Use(engine)
 	}
 
+	systemGroup := engine.Group("/system", systemAuthMw(conf.System))
+	if conf.System != "" {
+		systemGroup.POST("/system/upgrade", handleSystemUpgrade)
+		systemGroup.POST("/system/upload", handleSystemUpload)
+	}
 	if conf.Pprof {
-		pprof.Register(engine)
+		pprof.Register(systemGroup, "/pprof")
 	}
 
 	if conf.RequestID {
@@ -113,11 +118,15 @@ func New(conf *Config) (*http.Server, error) {
 		}
 	})
 
+	for _, item := range engine.Routes() {
+		fmt.Printf("%s %s %s\n", item.Method, item.Path, item.Handler)
+	}
+
 	addr := fmt.Sprintf("%s:%d", conf.Addr, conf.Port)
 	if conf.Endpoint != "" {
-		vlog.Info("HTTP Server Listening on : " + conf.Endpoint)
+		fmt.Println("HTTP Server Listening on : " + conf.Endpoint)
 	} else {
-		vlog.Info("HTTP Server Listening on : " + addr)
+		fmt.Println("HTTP Server Listening on : " + addr)
 	}
 	return &http.Server{Addr: addr, Handler: engine}, nil
 }

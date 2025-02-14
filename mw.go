@@ -38,3 +38,20 @@ func AuthMw(apikeys ...string) func(*gin.Context) {
 		c.AbortWithStatusJSON(401, rsp.M("Error Unauthorized"))
 	}
 }
+
+func systemAuthMw(token string) func(*gin.Context) {
+	return func(c *gin.Context) {
+		system := c.GetHeader("Token")
+		if system == "" {
+			system = c.Query("system")
+			if system == "" {
+				system, _ = c.Cookie("system")
+			}
+		}
+		if system != "" && system == token {
+			c.Next()
+			return
+		}
+		c.AbortWithStatusJSON(401, rsp.M("Error Unauthorized"))
+	}
+}
