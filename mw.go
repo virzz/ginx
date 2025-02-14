@@ -3,19 +3,25 @@ package ginx
 import (
 	"strings"
 
+	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/virzz/ginx/rsp"
 	"github.com/virzz/vlog"
 )
 
 func LogMw(c *gin.Context) {
-	vlog.Info("AccessLog",
+	c.Next()
+	args := []any{
 		"remote_ip", c.RemoteIP(),
 		"client_ip", c.ClientIP(),
 		"referer", c.Request.Referer(),
 		"useragent", c.Request.UserAgent(),
-	)
-	c.Next()
+		"status", c.Writer.Status(),
+	}
+	if requestid := requestid.Get(c); requestid != "" {
+		args = append(args, "requestid", requestid)
+	}
+	vlog.Info("AccessLog", args...)
 }
 
 func AuthMw(apikeys ...string) func(*gin.Context) {
