@@ -11,6 +11,14 @@ type (
 	RegisterFunc func(*gin.RouterGroup)
 )
 
-var Routers = []RegisterFunc{}
+type Routers []RegisterFunc
 
-func Register(vs ...RegisterFunc) { Routers = append(Routers, vs...) }
+func (rs *Routers) Register(f RegisterFunc) {
+	*rs = append(*rs, f)
+}
+
+func (rs Routers) Apply(g *gin.RouterGroup) {
+	for _, f := range rs {
+		f(g)
+	}
+}

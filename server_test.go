@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 		Port:    3003,
 		Pprof:   true,
 		Metrics: true,
-	})
+	}, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 		return
