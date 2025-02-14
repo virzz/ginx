@@ -19,7 +19,7 @@ import (
 	"github.com/virzz/ginx/apikey"
 )
 
-func New(conf *Config, routers []RegisterFunc, mwBefore, mwAfter []gin.HandlerFunc) (*http.Server, error) {
+func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*http.Server, error) {
 	os.MkdirAll("logs", 0755)
 	logFile, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
