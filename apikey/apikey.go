@@ -3,7 +3,6 @@ package apikey
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -108,7 +107,6 @@ func AuthedMW(c *gin.Context) {
 		return
 	}
 	data := sess.Data()
-	fmt.Println(data, sess.isNil)
 	if sess.isNil {
 		c.AbortWithStatusJSON(200, rsp.C(code.TokenExpired))
 		return
