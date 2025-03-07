@@ -61,7 +61,7 @@ func (s *RedisStore) Get(ctx context.Context, v Data) error {
 }
 
 func (s *RedisStore) Save(ctx context.Context, v Data, lifetime ...time.Duration) error {
-	if v.Token() == "" {
+	if v.Token() == "" || v.Token() == "null" {
 		v.New()
 	}
 	maxAge := time.Duration(s.maxAge) * time.Second

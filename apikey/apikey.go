@@ -115,10 +115,15 @@ func AuthedMW(c *gin.Context) {
 		c.AbortWithStatusJSON(200, rsp.C(code.Forbidden))
 		return
 	}
+
 	c.Set("id", data.ID())
 	c.Set("account", data.Account())
-	c.Set("roles", data.Roles())
-	c.Set("is_admin", slices.Contains(data.Roles(), "admin"))
+	roles := data.Roles()
+	c.Set("roles", roles)
+	c.Set("is_admin", slices.Contains(roles, "admin"))
+	for k, v := range data.Items() {
+		c.Set(k, v)
+	}
 	c.Next()
 }
 

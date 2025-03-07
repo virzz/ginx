@@ -2,11 +2,11 @@ package apikey
 
 import (
 	"crypto/rand"
+	"encoding"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"strings"
-
-	"github.com/go-json-experiment/json"
 )
 
 func generateRandomKey() string {
@@ -16,33 +16,37 @@ func generateRandomKey() string {
 }
 
 type (
+	DataStringSlice []string
+	DataMap         map[string]any
+
 	Data interface {
 		Token() string
 		ID() string
 		Account() string
 		Roles() []string
+		Items() DataMap
+		Get(string) any
+		New()
+
+		Set(string, any) Data
 		SetToken(string) Data
 		SetID(string) Data
 		SetAccount(string) Data
 		SetRoles([]string) Data
-
-		New()
-		Get(string) any
-		Set(string, any) Data
 	}
-
-	DataStringSlice []string
-	DataMap         map[string]any
 
 	DefaultData struct {
 		Token_   string          `json:"token" redis:"token"`
 		ID_      string          `json:"id" redis:"id"`
 		Account_ string          `json:"account" redis:"account"`
 		Roles_   DataStringSlice `json:"roles" redis:"roles"`
+		Items_   DataMap         `json:"items" redis:"items"`
 	}
 )
 
 var _ Data = (*DefaultData)(nil)
+var _ encoding.TextUnmarshaler = (*DataStringSlice)(nil)
+var _ encoding.TextUnmarshaler = (*DataMap)(nil)
 
 func (d DataStringSlice) MarshalBinary() ([]byte, error) {
 	return []byte(strings.Join(d, ",")), nil
@@ -57,13 +61,23 @@ func (d *DataStringSlice) UnmarshalText(buf []byte) error {
 
 func (d DataMap) MarshalBinary() ([]byte, error)    { return json.Marshal(d) }
 func (d *DataMap) UnmarshalBinary(buf []byte) error { return json.Unmarshal(buf, d) }
-func (d *DataMap) UnmarshalText(buf []byte) error   { return json.Unmarshal(buf, d) }
+func (d *DataMap) UnmarshalText(buf []byte) error {
+	_d := make(map[string]any)
+	err := json.Unmarshal(buf, &_d)
+	if err != nil {
+		return err
+	}
+	*d = _d
+	return nil
+}
 
 func (d *DefaultData) New()            { d.Token_ = generateRandomKey() }
 func (d *DefaultData) Token() string   { return d.Token_ }
 func (d *DefaultData) ID() string      { return d.ID_ }
 func (d *DefaultData) Account() string { return d.Account_ }
 func (d *DefaultData) Roles() []string { return []string(d.Roles_) }
+func (d *DefaultData) Items() DataMap  { return d.Items_ }
+
 func (d *DefaultData) SetToken(v string) Data {
 	d.Token_ = v
 	return d
@@ -95,6 +109,11 @@ func (d *DefaultData) Set(key string, val any) Data {
 		if v, ok := val.([]string); ok {
 			d.Roles_ = DataStringSlice(v)
 		}
+	default:
+		if d.Items_ == nil {
+			d.Items_ = make(DataMap)
+		}
+		d.Items_[key] = val
 	}
 	return d
 }
@@ -107,6 +126,12 @@ func (d *DefaultData) Get(key string) any {
 		return d.Account_
 	case "roles":
 		return []string(d.Roles_)
+	default:
+		if d.Items_ != nil {
+			if v, ok := d.Items_[key]; ok {
+				return v
+			}
+		}
 	}
 	return nil
 }
