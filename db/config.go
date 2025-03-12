@@ -3,11 +3,11 @@ package db
 import "github.com/spf13/pflag"
 
 func FlagSet(name string) *pflag.FlagSet {
-	fs := pflag.NewFlagSet("mysql", pflag.ContinueOnError)
+	fs := pflag.NewFlagSet("db", pflag.ContinueOnError)
 	fs.Bool("db.debug", false, "Database Debug Mode")
 	fs.String("db.sock", "", "Database Unix Socket")
 	fs.String("db.host", "127.0.0.1", "Database Host")
-	fs.Int("db.port", 3306, "Database Port")
+	fs.Int("db.port", 5432, "Database Port")
 	fs.String("db.name", name, "Database Name")
 	fs.String("db.user", "root", "Database User")
 	fs.String("db.pass", "root", "Database Password")

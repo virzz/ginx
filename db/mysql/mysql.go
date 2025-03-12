@@ -45,8 +45,8 @@ func connect(cfg *db.Config) (err error) {
 		}
 	}
 	gormCfg := &gorm.Config{Logger: newLogger,
-		DisableForeignKeyConstraintWhenMigrating: true,
 		QueryFields:                              true,
+		DisableForeignKeyConstraintWhenMigrating: true,
 		IgnoreRelationshipsWhenMigrating:         true,
 	}
 	dsn := fmt.Sprintf(

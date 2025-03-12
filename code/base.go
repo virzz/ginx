@@ -12,11 +12,10 @@ const (
 type BizCode int
 
 const (
-	Unknown BizCode = iota
-	Auth            // Auth
-	Captcha         // Captcha
-	Record          // Record(Database)
-	File            // File
+	Auth    BizCode = iota + 1 // Auth
+	Captcha                    // Captcha
+	Record                     // Record(Database)
+	File                       // File
 )
 
 var (

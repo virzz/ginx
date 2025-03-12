@@ -6,18 +6,22 @@ func (s *StoreConfig) WithAddr(v string) *StoreConfig {
 	s.Addr = v
 	return s
 }
+
 func (s *StoreConfig) WithPort(v int) *StoreConfig {
 	s.Port = v
 	return s
 }
+
 func (s *StoreConfig) WithPass(v string) *StoreConfig {
 	s.Pass = v
 	return s
 }
+
 func (s *StoreConfig) WithDB(v int) *StoreConfig {
 	s.DB = v
 	return s
 }
+
 func (s *StoreConfig) WithEnabled(v bool) *StoreConfig {
 	s.Enabled = v
 	return s

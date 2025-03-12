@@ -45,9 +45,9 @@ func connect(cfg *db.Config) (err error) {
 		}
 	}
 	gormCfg := &gorm.Config{Logger: newLogger,
-		DisableForeignKeyConstraintWhenMigrating: true,
 		QueryFields:                              true,
-		// IgnoreRelationshipsWhenMigrating:         true,
+		DisableForeignKeyConstraintWhenMigrating: true,
+		IgnoreRelationshipsWhenMigrating:         true,
 	}
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai",
