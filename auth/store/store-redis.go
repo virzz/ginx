@@ -1,4 +1,4 @@
-package apikey
+package store
 
 import (
 	"context"
@@ -6,38 +6,30 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/virzz/vlog"
 )
 
-type Store interface {
-	Get(context.Context, Data) error
-	Save(context.Context, Data, ...time.Duration) error
-	Clear(Data) error
-}
-
 type RedisStore struct {
-	client    redis.UniversalClient // client to connect to redis
-	keyPrefix string                // key prefix with which the session will be stored
+	client    redis.UniversalClient
+	keyPrefix string
 	maxAge    int
 }
 
-type Option func(*RedisStore)
-
-func WithClient(client redis.UniversalClient) func(*RedisStore) {
-	return func(rs *RedisStore) { rs.client = client }
+func (s *RedisStore) WithKeyPrefix(keyPrefix string) Store {
+	s.keyPrefix = keyPrefix
+	return s
 }
 
-func WithKeyPrefix(keyPrefix string) func(*RedisStore) {
-	return func(rs *RedisStore) { rs.keyPrefix = keyPrefix }
+func (s *RedisStore) WithMaxAge(maxAge int) Store {
+	s.maxAge = maxAge
+	return s
 }
 
-func WithMaxAge(maxAge int) func(*RedisStore) {
-	return func(rs *RedisStore) { rs.maxAge = maxAge }
-}
-
-func NewRedisStore(opts ...Option) (*RedisStore, error) {
+func NewRedisStore(client redis.UniversalClient, opts ...StoreOption) (*RedisStore, error) {
 	rs := &RedisStore{
-		keyPrefix: "ginx_apikey_",
-		maxAge:    3 * 24 * 3600,
+		keyPrefix: StoreKeyPrefix,
+		maxAge:    StoreMaxAge,
+		client:    client,
 	}
 	for _, opt := range opts {
 		opt(rs)
@@ -70,7 +62,7 @@ func (s *RedisStore) Save(ctx context.Context, v Data, lifetime ...time.Duration
 	}
 	key := s.keyPrefix + v.Token()
 	if err := s.client.HSet(ctx, key, v).Err(); err != nil {
-		log.Error("Failed to hset", "key", key, "err", err.Error())
+		vlog.Error("Failed to hset", "key", key, "err", err.Error())
 		return err
 	}
 	return s.client.Expire(ctx, key, maxAge).Err()
