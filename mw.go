@@ -1,6 +1,7 @@
 package ginx
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/gin-contrib/requestid"
@@ -24,22 +25,25 @@ func LogMw(c *gin.Context) {
 	vlog.Info("AccessLog", args...)
 }
 
-func AuthMw(apikeys ...string) func(*gin.Context) {
+func ApikeyMw(name string, apikeys ...string) func(*gin.Context) {
+	if name == "" {
+		name = "apikey"
+	}
+	if name == "disable" {
+		return func(c *gin.Context) { c.Next() }
+	}
 	return func(c *gin.Context) {
-		apikey := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
+		apikey := c.GetHeader(name)
 		if apikey == "" {
-			apikey = c.Query("apikey")
+			apikey = c.Query(name)
 			if apikey == "" {
-				apikey, _ = c.Cookie("apikey")
+				apikey, _ = c.Cookie(name)
 			}
 		}
-		if apikey != "" {
-			for _, key := range apikeys {
-				if apikey == key {
-					c.Next()
-					return
-				}
-			}
+		apikey = strings.TrimSpace(apikey)
+		if apikey != "" && slices.Contains(apikeys, apikey) {
+			c.Next()
+			return
 		}
 		c.AbortWithStatusJSON(401, rsp.M("Error Unauthorized"))
 	}
@@ -47,7 +51,7 @@ func AuthMw(apikeys ...string) func(*gin.Context) {
 
 func systemAuthMw(token string) func(*gin.Context) {
 	return func(c *gin.Context) {
-		system := c.GetHeader("Token")
+		system := c.GetHeader("system")
 		if system == "" {
 			system = c.Query("system")
 			if system == "" {
