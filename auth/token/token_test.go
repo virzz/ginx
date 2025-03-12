@@ -29,10 +29,11 @@ func TestToken(t *testing.T) {
 		v := token.Default(c)
 		v.Set("id", "1")
 		v.Set("name", "test")
+		v.Set("group_id", "waefwaerfws")
 		v.Save()
 		c.String(200, v.Token())
 	})
-	err = r.Run(":8080")
+	err = r.Run(":8081")
 	if err != nil {
 		t.Fatal(err)
 	}

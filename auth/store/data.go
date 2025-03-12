@@ -1,39 +1,33 @@
 package store
 
 import (
-	"crypto/rand"
-	"encoding/hex"
-	"io"
+	"encoding"
 	"strings"
 
 	"github.com/go-json-experiment/json"
 )
 
-func generateRandomKey() string {
-	k := make([]byte, 20)
-	io.ReadFull(rand.Reader, k)
-	return hex.EncodeToString(k)
-}
-
 type (
-	Data interface {
+	DataStringSlice []string
+	DataMap         map[string]any
+	Data            interface {
 		Token() string
 		ID() string
 		Account() string
 		Roles() []string
+		Items() DataMap
+		Get(string) any
+		New()
+		Set(string, any) Data
 		SetToken(string) Data
 		SetID(string) Data
 		SetAccount(string) Data
 		SetRoles([]string) Data
-
-		New()
-		Get(string) any
-		Set(string, any) Data
 	}
-
-	DataStringSlice []string
-	DataMap         map[string]any
 )
+
+var _ encoding.TextUnmarshaler = (*DataStringSlice)(nil)
+var _ encoding.TextUnmarshaler = (*DataMap)(nil)
 
 func (d DataStringSlice) MarshalBinary() ([]byte, error) {
 	return []byte(strings.Join(d, ",")), nil
@@ -48,4 +42,12 @@ func (d *DataStringSlice) UnmarshalText(buf []byte) error {
 
 func (d DataMap) MarshalBinary() ([]byte, error)    { return json.Marshal(d) }
 func (d *DataMap) UnmarshalBinary(buf []byte) error { return json.Unmarshal(buf, d) }
-func (d *DataMap) UnmarshalText(buf []byte) error   { return json.Unmarshal(buf, d) }
+func (d *DataMap) UnmarshalText(buf []byte) error {
+	_d := make(map[string]any)
+	err := json.Unmarshal(buf, &_d)
+	if err != nil {
+		return err
+	}
+	*d = _d
+	return nil
+}
