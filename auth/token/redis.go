@@ -1,8 +1,7 @@
-package store
+package token
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -15,33 +14,20 @@ type RedisStore struct {
 	maxAge    int
 }
 
-func (s *RedisStore) WithKeyPrefix(keyPrefix string) Store {
-	s.keyPrefix = keyPrefix
-	return s
-}
-
-func (s *RedisStore) WithMaxAge(maxAge int) Store {
-	s.maxAge = maxAge
-	return s
-}
-
-func NewRedisStore(client redis.UniversalClient, opts ...StoreOption) (*RedisStore, error) {
-	rs := &RedisStore{
-		keyPrefix: StoreKeyPrefix,
-		maxAge:    StoreMaxAge,
+func NewRedisStore(client redis.UniversalClient, maxAge ...int) (*RedisStore, error) {
+	s := &RedisStore{
+		keyPrefix: "ginx:auth:token:",
+		maxAge:    7 * 24 * 60 * 60,
 		client:    client,
 	}
-	for _, opt := range opts {
-		opt(rs)
+	if len(maxAge) > 0 {
+		s.maxAge = maxAge[0]
 	}
-	if rs.client == nil {
-		return nil, errors.New("redisstore: client is nil")
-	}
-	return rs, rs.client.Ping(context.Background()).Err()
+	return s, client.Ping(context.Background()).Err()
 }
 
-func (s *RedisStore) Clear(v Data) error {
-	return s.client.Del(context.Background(), s.keyPrefix+v.Token()).Err()
+func (s *RedisStore) Clear(ctx context.Context, v Data) error {
+	return s.client.Del(ctx, s.keyPrefix+v.Token()).Err()
 }
 
 func (s *RedisStore) Get(ctx context.Context, v Data) error {

@@ -1,8 +1,6 @@
 module github.com/virzz/ginx
 
-go 1.24
-
-toolchain go1.24.0
+go 1.24.1
 
 tool github.com/virzz/structx
 
@@ -10,9 +8,12 @@ require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/pprof v1.5.2
 	github.com/gin-contrib/requestid v1.0.4
+	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-json-experiment/json v0.0.0-20250223041408-d3c622f1b874
 	github.com/go-playground/validator/v10 v10.25.0
+	github.com/gorilla/securecookie v1.1.2
+	github.com/gorilla/sessions v1.2.2
 	github.com/penglongli/gin-metrics v0.1.13
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/spf13/pflag v1.0.6
@@ -41,6 +42,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/context v1.1.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.7.2 // indirect

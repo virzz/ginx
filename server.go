@@ -12,11 +12,10 @@ import (
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/penglongli/gin-metrics/ginmetrics"
-	"github.com/redis/go-redis/v9"
 
+	"github.com/virzz/ginx/auth"
+	"github.com/virzz/ginx/auth/apikey"
 	"github.com/virzz/vlog"
-
-	"github.com/virzz/ginx/apikey"
 )
 
 func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*http.Server, error) {
@@ -55,7 +54,7 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 		m.Use(engine)
 	}
 
-	systemGroup := engine.Group("/system", systemAuthMw(conf.System))
+	systemGroup := engine.Group("/system", apikey.Mw("system", conf.System))
 	if conf.System != "" {
 		systemGroup.POST("/system/upgrade", handleSystemUpgrade)
 		systemGroup.POST("/system/upload", handleSystemUpload)
@@ -79,18 +78,9 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 	}
 	engine.Use(cors.New(c))
 
-	// Session
-	if conf.Store.Enabled {
-		client := redis.NewClient(&redis.Options{
-			Addr:     fmt.Sprintf("%s:%d", conf.Store.Addr, conf.Store.Port),
-			DB:       conf.Store.DB,
-			Password: conf.Store.Pass,
-		})
-		store, err := apikey.NewRedisStore(apikey.WithClient(client))
-		if err != nil {
-			panic(err)
-		}
-		engine.Use(apikey.Init(store))
+	// Auth: Session
+	if conf.Auth.Enabled {
+		engine.Use(auth.Init(&conf.Auth))
 	}
 
 	// Register Router

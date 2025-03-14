@@ -1,4 +1,4 @@
-package store
+package token
 
 import (
 	"crypto/rand"
@@ -16,10 +16,17 @@ type DefaultData struct {
 
 var _ Data = (*DefaultData)(nil)
 
-func (d *DefaultData) New() {
+func New() string {
 	k := make([]byte, 20)
 	io.ReadFull(rand.Reader, k)
-	d.Token_ = hex.EncodeToString(k)
+	return hex.EncodeToString(k)
+}
+
+func (d *DefaultData) New() string {
+	_d := &DefaultData{}
+	_d.Token_ = New()
+	*d = *_d
+	return d.Token_
 }
 func (d *DefaultData) Token() string   { return d.Token_ }
 func (d *DefaultData) ID() string      { return d.ID_ }
@@ -38,8 +45,17 @@ func (d *DefaultData) SetAccount(v string) Data {
 	d.Account_ = v
 	return d
 }
+
 func (d *DefaultData) SetRoles(v []string) Data {
 	d.Roles_ = DataStringSlice(v)
+	return d
+}
+
+func (d *DefaultData) SetValues(k string, v any) Data {
+	if d.Items_ == nil {
+		d.Items_ = make(DataMap)
+	}
+	d.Items_[k] = v
 	return d
 }
 
@@ -82,4 +98,22 @@ func (d *DefaultData) Get(key string) any {
 		}
 	}
 	return nil
+}
+
+func (d *DefaultData) Delete(key string) Data {
+	switch key {
+	case "id":
+		d.ID_ = ""
+	case "account":
+		d.Account_ = ""
+	case "roles":
+		d.Roles_ = nil
+	default:
+		if d.Items_ != nil {
+			if _, ok := d.Items_[key]; ok {
+				delete(d.Items_, key)
+			}
+		}
+	}
+	return d
 }
