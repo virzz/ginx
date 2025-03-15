@@ -57,7 +57,21 @@ type AuthLoginReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
+type AuthRegisterReq struct {
+	Captcha
+	Account  string `json:"account" form:"account" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
+	Confirm  string `json:"confirm" form:"confirm" binding:"required"`
+}
+
+type AuthEmailReq struct {
+	Captcha
+	Account string `json:"account" form:"account" binding:"required"`
+	Email   string `json:"email" form:"email" binding:"required"`
+}
+
 type AuthResetReq struct {
+	Code     string `json:"code" form:"code" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
 	Confirm  string `json:"confirm" form:"confirm" binding:"required"`
 }
