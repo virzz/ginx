@@ -1,13 +1,13 @@
-package token_test
+package auth_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	token "github.com/virzz/ginx/auth/token"
+	"github.com/virzz/ginx/auth"
 )
 
-var data = token.DefaultData{
+var data = auth.DefaultData[string]{
 	Token_:   "token",
 	ID_:      "id",
 	Account_: "account",
@@ -23,7 +23,7 @@ func TestDataJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(string(buf))
-	v := &token.DefaultData{}
+	v := &auth.DefaultData[string]{}
 	err = json.Unmarshal(buf, v)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +37,7 @@ func TestDataSliceBinary(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(string(buf))
-	v := &token.DefaultData{}
+	v := &auth.DefaultData[string]{}
 	err = v.Roles_.UnmarshalBinary(buf)
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +51,7 @@ func TestDataMapBinary(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(string(buf))
-	v := &token.DefaultData{}
+	v := &auth.DefaultData[string]{}
 	err = v.Items_.UnmarshalText(buf)
 	if err != nil {
 		t.Fatal(err)

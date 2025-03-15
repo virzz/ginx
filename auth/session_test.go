@@ -1,4 +1,4 @@
-package token_test
+package auth_test
 
 import (
 	"encoding/json"
@@ -8,18 +8,17 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-
-	token "github.com/virzz/ginx/auth/token"
+	"github.com/virzz/ginx/auth"
 )
+
+var cfg = &auth.Config{Host: "localhost", Port: 6379}
 
 func TestTokenRedis(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	client := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-	r.Use(token.Init(client))
+	r.Use(auth.Init[string](cfg))
 	r.GET("/info", func(c *gin.Context) {
-		v := token.Default(c).Data()
+		v := auth.Default[string](c).Data()
 		buf, err := json.MarshalIndent(v, "", "  ")
 		if err != nil {
 			c.String(500, "Marshal"+err.Error())
@@ -34,7 +33,7 @@ func TestTokenRedis(t *testing.T) {
 		c.JSON(200, v)
 	})
 	r.GET("/login", func(c *gin.Context) {
-		v := token.Default(c)
+		v := auth.Default[string](c)
 		v.SetID("1")
 		v.SetAccount("test")
 		v.SetRoles([]string{"admin"})

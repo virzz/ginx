@@ -1,4 +1,4 @@
-package token
+package auth
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/virzz/vlog"
 )
 
-type RedisStore struct {
+type RedisStore[T IDType] struct {
 	client    redis.UniversalClient
 	keyPrefix string
 	maxAge    int
 }
 
-func NewRedisStore(client redis.UniversalClient, maxAge ...int) (*RedisStore, error) {
-	s := &RedisStore{
+func NewRedisStore[T IDType](client redis.UniversalClient, maxAge ...int) (*RedisStore[T], error) {
+	s := &RedisStore[T]{
 		keyPrefix: "ginx:auth:token:",
 		maxAge:    7 * 24 * 60 * 60,
 		client:    client,
@@ -26,11 +26,11 @@ func NewRedisStore(client redis.UniversalClient, maxAge ...int) (*RedisStore, er
 	return s, client.Ping(context.Background()).Err()
 }
 
-func (s *RedisStore) Clear(ctx context.Context, v Data) error {
+func (s *RedisStore[T]) Clear(ctx context.Context, v Data[T]) error {
 	return s.client.Del(ctx, s.keyPrefix+v.Token()).Err()
 }
 
-func (s *RedisStore) Get(ctx context.Context, v Data) error {
+func (s *RedisStore[T]) Get(ctx context.Context, v Data[T]) error {
 	x := s.client.HGetAll(ctx, s.keyPrefix+v.Token())
 	if len(x.Val()) == 0 {
 		return redis.Nil
@@ -38,7 +38,7 @@ func (s *RedisStore) Get(ctx context.Context, v Data) error {
 	return x.Scan(v)
 }
 
-func (s *RedisStore) Save(ctx context.Context, v Data, lifetime ...time.Duration) error {
+func (s *RedisStore[T]) Save(ctx context.Context, v Data[T], lifetime ...time.Duration) error {
 	if v.Token() == "" || v.Token() == "null" {
 		v.New()
 	}

@@ -1,4 +1,4 @@
-package token
+package auth
 
 import (
 	"github.com/gin-gonic/gin"
@@ -12,7 +12,7 @@ func RoleMW(roles ...string) gin.HandlerFunc {
 		roleMap[role] = struct{}{}
 	}
 	return func(c *gin.Context) {
-		for _, r := range Default(c).Roles() {
+		for _, r := range c.GetStringSlice("roles") {
 			if _, ok := roleMap[r]; ok {
 				c.Next()
 				return
@@ -24,7 +24,7 @@ func RoleMW(roles ...string) gin.HandlerFunc {
 
 func AuthMW() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetString("id") != "" && c.GetString("account") != "" {
+		if _, ok := c.Get("id"); ok && c.GetString("account") != "" {
 			c.Next()
 			return
 		}

@@ -7,13 +7,4 @@ import (
 	"github.com/virzz/ginx/rsp"
 )
 
-func LogoutHandler(c *gin.Context) {
-	// err := session.Default(c).Clear()
-	// if err != nil {
-	// 	c.AbortWithStatusJSON(200, rsp.C(code.TokenDestory))
-	// 	return
-	// }
-	c.JSON(200, rsp.OK())
-}
-
 func ErrCodeHandler(c *gin.Context) { c.JSON(200, rsp.S(code.Codes)) }

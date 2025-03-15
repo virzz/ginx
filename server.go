@@ -18,7 +18,7 @@ import (
 	"github.com/virzz/vlog"
 )
 
-func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*http.Server, error) {
+func New[T auth.IDType](conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*http.Server, error) {
 	os.MkdirAll("logs", 0755)
 	logFile, err := os.OpenFile(filepath.Join("logs", "gin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -43,8 +43,8 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 		gin.DefaultErrorWriter = logFile
 	}
 
-	engine.GET("/version", func(c *gin.Context) { c.String(200, conf.version+" "+conf.commit) })
-	engine.GET("/health", func(c *gin.Context) { c.Status(200) })
+	engine.GET(conf.Prefix+"/version", func(c *gin.Context) { c.String(200, conf.version+" "+conf.commit) })
+	engine.GET(conf.Prefix+"/health", func(c *gin.Context) { c.Status(200) })
 
 	if conf.Metrics {
 		m := ginmetrics.GetMonitor()
@@ -54,13 +54,13 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 		m.Use(engine)
 	}
 
-	systemGroup := engine.Group("/system", apikey.Mw("system", conf.System))
 	if conf.System != "" {
+		systemGroup := engine.Group("/system", apikey.Mw("system", conf.System))
 		systemGroup.POST("/system/upgrade", handleSystemUpgrade)
 		systemGroup.POST("/system/upload", handleSystemUpload)
-	}
-	if conf.Pprof {
-		pprof.Register(systemGroup, "/pprof")
+		if conf.Pprof {
+			pprof.Register(systemGroup, "/pprof")
+		}
 	}
 
 	if conf.RequestID {
@@ -80,7 +80,7 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 
 	// Auth: Session
 	if conf.Auth.Enabled {
-		engine.Use(auth.Init(&conf.Auth))
+		engine.Use(auth.Init[T](&conf.Auth))
 	}
 
 	// Register Router
@@ -113,10 +113,6 @@ func New(conf *Config, routers Routers, mwBefore, mwAfter []gin.HandlerFunc) (*h
 	}
 
 	addr := fmt.Sprintf("%s:%d", conf.Addr, conf.Port)
-	if conf.Endpoint != "" {
-		fmt.Println("HTTP Server Listening on : " + conf.Endpoint)
-	} else {
-		fmt.Println("HTTP Server Listening on : " + addr)
-	}
+	fmt.Println("HTTP Server Listening on : " + conf.GetEndpoint())
 	return &http.Server{Addr: addr, Handler: engine}, nil
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	httpSrv, err := ginx.New(&ginx.Config{
+	httpSrv, err := ginx.New[string](&ginx.Config{
 		Addr:    "127.0.0.1",
 		Port:    3003,
 		Pprof:   true,

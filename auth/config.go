@@ -6,16 +6,6 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type AuthType string
-
-const (
-	AuthTypeApikey  AuthType = "apikey"
-	AuthTypeToken   AuthType = "token"   // +redis
-	AuthTypeSession AuthType = "session" // ?+redis
-	AuthTypeCookie  AuthType = "cookie"  // ?+redis
-	// AuthTypeOIDC    AuthType = "oidc"
-)
-
 func FlagSet(name string) *pflag.FlagSet {
 	fs := pflag.NewFlagSet("http.auth", pflag.ContinueOnError)
 
@@ -34,9 +24,8 @@ func FlagSet(name string) *pflag.FlagSet {
 
 //go:generate structx -struct Config
 type Config struct {
-	Enabled bool     `json:"enabled" yaml:"enabled"`
-	Type    AuthType `json:"type" yaml:"type"`
-	MaxAge  int      `json:"maxage" yaml:"maxage"` // Expire(MaxAge)
+	Enabled bool `json:"enabled" yaml:"enabled"`
+	MaxAge  int  `json:"maxage" yaml:"maxage"` // Expire(MaxAge)
 
 	// Cookie
 	Secret string `json:"secret" yaml:"secret"` // Cookie Secret

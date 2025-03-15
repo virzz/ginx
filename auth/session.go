@@ -1,4 +1,4 @@
-package token
+package auth
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/virzz/vlog"
 )
 
-type Session struct {
+type Session[T IDType] struct {
 	ctx   context.Context
-	data  Data
+	data  Data[T]
 	IsNil bool
 
 	store     redis.UniversalClient
@@ -22,15 +22,15 @@ type Session struct {
 	Token_    string
 }
 
-func (s *Session) Token() string            { return s.Token_ }
-func (s *Session) ID() string               { return s.Data().ID() }
-func (s *Session) Account() string          { return s.Data().Account() }
-func (s *Session) Roles() []string          { return s.Data().Roles() }
-func (s *Session) HasRole(role string) bool { return slices.Contains(s.Roles(), role) }
+func (s *Session[T]) Token() string            { return s.Token_ }
+func (s *Session[T]) ID() T                    { return s.Data().ID() }
+func (s *Session[T]) Account() string          { return s.Data().Account() }
+func (s *Session[T]) Roles() []string          { return s.Data().Roles() }
+func (s *Session[T]) HasRole(role string) bool { return slices.Contains(s.Roles(), role) }
 
-func (s *Session) Data() Data {
+func (s *Session[T]) Data() Data[T] {
 	if s.data == nil {
-		s.data = &DefaultData{}
+		s.data = &DefaultData[T]{}
 		s.data.New()
 		return s.data
 	}
@@ -49,22 +49,23 @@ func (s *Session) Data() Data {
 	return s.data
 }
 
-func (s *Session) Clear() {
+func (s *Session[T]) Clear() {
 	s.store.Del(s.ctx, s.keyPrefix+s.Token_)
 	s.Data().New()
 }
-func (s *Session) Delete(key string) {
+
+func (s *Session[T]) Delete(key string) {
 	s.store.HDel(s.ctx, s.keyPrefix+s.Token_, key)
 	s.Data().Delete(key)
 }
 
-func (s *Session) Get(key string) any            { return s.Data().Get(key) }
-func (s *Session) Set(key string, val any)       { s.Data().Set(key, val) }
-func (s *Session) SetID(val string)              { s.Data().SetID(val) }
-func (s *Session) SetAccount(val string)         { s.Data().SetAccount(val) }
-func (s *Session) SetRoles(roles []string)       { s.Data().SetRoles(roles) }
-func (s *Session) SetValues(key string, val any) { s.Data().SetValues(key, val) }
-func (s *Session) Save(lifetime ...time.Duration) error {
+func (s *Session[T]) Get(key string) any            { return s.Data().Get(key) }
+func (s *Session[T]) Set(key string, val any)       { s.Data().Set(key, val) }
+func (s *Session[T]) SetID(val T)                   { s.Data().SetID(val) }
+func (s *Session[T]) SetAccount(val string)         { s.Data().SetAccount(val) }
+func (s *Session[T]) SetRoles(roles []string)       { s.Data().SetRoles(roles) }
+func (s *Session[T]) SetValues(key string, val any) { s.Data().SetValues(key, val) }
+func (s *Session[T]) Save(lifetime ...time.Duration) error {
 	if s.Token_ == "" || s.Token_ == "null" {
 		s.data.New()
 		s.Token_ = s.data.Token()
@@ -81,8 +82,8 @@ func (s *Session) Save(lifetime ...time.Duration) error {
 	return s.store.Expire(s.ctx, key, maxAge).Err()
 }
 
-func NewSession(ctx context.Context, store *redis.Client, data Data, maxAge ...int) *Session {
-	s := &Session{
+func NewSession[T IDType](ctx context.Context, store *redis.Client, data Data[T], maxAge ...int) *Session[T] {
+	s := &Session[T]{
 		ctx:       ctx,
 		store:     store,
 		data:      data,
@@ -96,11 +97,11 @@ func NewSession(ctx context.Context, store *redis.Client, data Data, maxAge ...i
 	return s
 }
 
-func (s *Session) MarshalJSON() ([]byte, error) {
+func (s *Session[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Data())
 }
 
-func (s *Session) UnmarshalJSON(data []byte) error {
+func (s *Session[T]) UnmarshalJSON(data []byte) error {
 	err := json.Unmarshal(data, s.Data())
 	if err != nil {
 		return err
