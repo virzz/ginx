@@ -1,16 +1,25 @@
 package db
 
-import "github.com/spf13/pflag"
+import (
+	"os/user"
+
+	"github.com/spf13/pflag"
+)
 
 func FlagSet(name string) *pflag.FlagSet {
+	username := "root"
+	u, _ := user.Current()
+	if u != nil {
+		username = u.Username
+	}
 	fs := pflag.NewFlagSet("db", pflag.ContinueOnError)
 	fs.Bool("db.debug", false, "Database Debug Mode")
 	fs.String("db.sock", "", "Database Unix Socket")
 	fs.String("db.host", "127.0.0.1", "Database Host")
 	fs.Int("db.port", 5432, "Database Port")
 	fs.String("db.name", name, "Database Name")
-	fs.String("db.user", "root", "Database User")
-	fs.String("db.pass", "root", "Database Password")
+	fs.String("db.user", username, "Database User")
+	fs.String("db.pass", "", "Database Password")
 	fs.Int("db.conn.idle", 20, "Database MaxIdleConns")
 	fs.Int("db.conn.open", 250, "Database MaxOpenConns")
 	fs.Int("db.conn.lifetime", 3600, "Database ConnMaxLifetime")

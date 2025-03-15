@@ -1,10 +1,11 @@
 package pgsql
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -22,9 +23,14 @@ var (
 	oncePlus once.OncePlus
 )
 
-func R() *gorm.DB { return std }
+func R() *gorm.DB {
+	if std == nil {
+		panic("pgsql not init")
+	}
+	return std
+}
 
-func Migrate(models []any) error { return std.AutoMigrate(models...) }
+func Migrate(models ...any) error { return std.AutoMigrate(models...) }
 
 func connect(cfg *db.Config) (err error) {
 	newLogger := gLogger.Default.LogMode(gLogger.Info)
@@ -49,10 +55,29 @@ func connect(cfg *db.Config) (err error) {
 		DisableForeignKeyConstraintWhenMigrating: true,
 		IgnoreRelationshipsWhenMigrating:         true,
 	}
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai",
-		cfg.Host, cfg.User, cfg.Pass, cfg.Name, cfg.Port,
-	)
+	dsnList := []string{}
+	if cfg.Host != "" {
+		dsnList = append(dsnList, "host="+cfg.Host)
+	}
+	if cfg.Port != 0 {
+		dsnList = append(dsnList, "port="+strconv.Itoa(cfg.Port))
+	}
+	if cfg.User != "" {
+		dsnList = append(dsnList, "user="+cfg.User)
+	}
+	if cfg.Pass != "" {
+		dsnList = append(dsnList, "password="+cfg.Pass)
+	}
+	if cfg.Name != "" {
+		dsnList = append(dsnList, "dbname="+cfg.Name)
+	}
+	if len(dsnList) > 0 {
+		dsnList = append(dsnList, "sslmode=disable", "TimeZone=Asia/Shanghai")
+	}
+	dsn := strings.Join(dsnList, " ")
+	if cfg.Debug {
+		vlog.Info("Connecting to postgres", "dsn", dsn)
+	}
 	std, err = gorm.Open(postgres.New(postgres.Config{DSN: dsn, PreferSimpleProtocol: true}), gormCfg)
 	if err != nil {
 		vlog.Error("Failed to connect postgres", "err", err.Error())

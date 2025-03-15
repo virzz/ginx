@@ -22,9 +22,14 @@ var (
 	oncePlus once.OncePlus
 )
 
-func R() *gorm.DB { return std }
+func R() *gorm.DB {
+	if std == nil {
+		panic("mysql not init")
+	}
+	return std
+}
 
-func Migrate(models []any) error { return std.AutoMigrate(models...) }
+func Migrate(models ...any) error { return std.AutoMigrate(models...) }
 
 func connect(cfg *db.Config) (err error) {
 	newLogger := gLogger.Default.LogMode(gLogger.Info)

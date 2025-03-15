@@ -1,6 +1,8 @@
 package ginx
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/virzz/ginx/auth"
 )
@@ -44,4 +46,15 @@ type Config struct {
 	RequestID bool        `json:"requestid" yaml:"requestid"`
 	Metrics   bool        `json:"metrics" yaml:"metrics"`
 	Auth      auth.Config `json:"auth" yaml:"auth"`
+}
+
+func (c *Config) GetEndpoint() string {
+	if c.Endpoint != "" {
+		c.Endpoint = c.GetAddr()
+	}
+	return c.Endpoint
+}
+
+func (c *Config) GetAddr() string {
+	return fmt.Sprintf("%s:%d", c.Addr, c.Port)
 }
