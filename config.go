@@ -35,16 +35,16 @@ type Config struct {
 	commit  string `json:"-" yaml:"-"`
 
 	System    string      `json:"system" yaml:"system"`
-	Prefix    string      `json:"prefix" yaml:"prefix"`
+	Prefix    string      `json:"prefix" yaml:"prefix" default:"/api"`
 	Endpoint  string      `json:"endpoint" yaml:"endpoint"`
-	Addr      string      `json:"addr" yaml:"addr"`
-	Port      int         `json:"port" yaml:"port"`
+	Addr      string      `json:"addr" yaml:"addr" default:"127.0.0.1"`
+	Port      int         `json:"port" yaml:"port" default:"8080"`
 	Origins   []string    `json:"origins" yaml:"origins"`
 	Headers   []string    `json:"headers" yaml:"headers"`
 	Debug     bool        `json:"debug" yaml:"debug"`
 	Pprof     bool        `json:"pprof" yaml:"pprof"`
-	RequestID bool        `json:"requestid" yaml:"requestid"`
-	Metrics   bool        `json:"metrics" yaml:"metrics"`
+	RequestID bool        `json:"requestid" yaml:"requestid" default:"true"`
+	Metrics   bool        `json:"metrics" yaml:"metrics" default:"true"`
 	Auth      auth.Config `json:"auth" yaml:"auth"`
 }
 

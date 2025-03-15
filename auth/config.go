@@ -8,12 +8,8 @@ import (
 
 func FlagSet(name string) *pflag.FlagSet {
 	fs := pflag.NewFlagSet("http.auth", pflag.ContinueOnError)
-
 	fs.Bool("http.auth.enabled", false, "Enable Auth")
-
 	fs.Int("http.auth.maxage", 7*24*3600, "HTTP Auth MaxAge")
-	fs.String("http.auth.secret", "", "Session Store Secret")
-
 	fs.String("http.auth.host", "127.0.0.1", "Redis Store Host")
 	fs.Int("http.auth.port", 6379, "Redis Store Port")
 	fs.Int("http.auth.db", 0, "Redis Store DB")
@@ -24,17 +20,12 @@ func FlagSet(name string) *pflag.FlagSet {
 
 //go:generate structx -struct Config
 type Config struct {
-	Enabled bool `json:"enabled" yaml:"enabled"`
-	MaxAge  int  `json:"maxage" yaml:"maxage"` // Expire(MaxAge)
-
-	// Cookie
-	Secret string `json:"secret" yaml:"secret"` // Cookie Secret
-
-	// Token | Redis
-	Host string `json:"host" yaml:"host"` // Redis Address
-	Port int    `json:"port" yaml:"port"` // Redis Port
-	Pass string `json:"pass" yaml:"pass"` // Redis Password
-	DB   int    `json:"db" yaml:"db"`     // Redis DB
+	Enabled bool   `json:"enabled" yaml:"enabled"`
+	MaxAge  int    `json:"maxage" yaml:"maxage"`                 // Expire(MaxAge)
+	Host    string `json:"host" yaml:"host" default:"127.0.0.1"` // Redis Address
+	Port    int    `json:"port" yaml:"port" default:"6379"`      // Redis Port
+	Pass    string `json:"pass" yaml:"pass"`                     // Redis Password
+	DB      int    `json:"db" yaml:"db"`                         // Redis DB
 }
 
 func (s *Config) WithAddr(v string) *Config {
