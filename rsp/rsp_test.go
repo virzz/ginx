@@ -19,6 +19,6 @@ func TestMsg(t *testing.T) {
 	fmt.Println(jsonString(rsp.OK()))
 	fmt.Println(jsonString(rsp.M("aaaaaaaaaaaaaaaa")))
 	fmt.Println(jsonString(rsp.OK()))
-	fmt.Println(jsonString(rsp.E(code.RecordUnknown, "RecordUnknown")))
+	fmt.Println(jsonString(rsp.E(code.DatabaseUnknown, "DatabaseUnknown")))
 	fmt.Println(jsonString(rsp.OK()))
 }

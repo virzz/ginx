@@ -1,45 +1,42 @@
 package code
 
-type SystemCode int
+type (
+	SystemCode int
+	BizCode    int
+)
 
 const (
+	// 系统代码
 	OK       SystemCode = iota
 	Client              // 客户请求错误
 	Internal            // 内部错误
 	Remote              // 远程错误
-)
-
-type BizCode int
-
-const (
-	Auth    BizCode = iota + 1 // Auth
-	Captcha                    // Captcha
-	Record                     // Record(Database)
-	File                       // File
+	// 业务代码
+	_biz_code BizCode = iota + 1000
+	Auth              // Auth
+	Captcha           // Captcha
+	Database          // Database
+	File              // File
 )
 
 var (
-	Success = New(OK, 0, 0, "成功")
-)
-
-var (
+	Success       = New(OK, 0, 0, "成功")
 	UnknownErr    = New(Internal, 0, 0, "系统错误")
 	UnImplemented = New(Internal, 0, 1, "未实现")
 	NotFound      = New(Internal, 0, 2, "资源未找到")
-
-	RecordUnknown  = New(Internal, Record, 0, "未知数据库错误")
-	RecordExists   = New(Internal, Record, 1, "记录已存在")
-	RecordUpdate   = New(Internal, Record, 2, "记录更新失败")
-	RecordDelete   = New(Internal, Record, 3, "记录删除失败")
-	RecordInsert   = New(Internal, Record, 4, "记录插入失败")
-	RecordTruncate = New(Internal, Record, 5, "记录清空失败")
-)
-
-// Request
-var (
+	// Request
 	BadRequest   = New(Client, 0, 0, "请求不合法")
 	RequestLimit = New(Client, 0, 1, "请求过于频繁")
 	ParamInvalid = New(Client, 0, 2, "参数不合法")
+)
+
+var (
+	DatabaseUnknown  = New(Internal, Database, 0, "未知数据库错误")
+	DatabaseExists   = New(Internal, Database, 1, "已存在")
+	DatabaseUpdate   = New(Internal, Database, 2, "更新失败")
+	DatabaseDelete   = New(Internal, Database, 3, "删除失败")
+	DatabaseInsert   = New(Internal, Database, 4, "插入失败")
+	DatabaseTruncate = New(Internal, Database, 5, "清空失败")
 )
 
 // Auth
@@ -66,8 +63,7 @@ var (
 
 // Captcha
 var (
-	CaptchaInvalid = New(Client, Captcha, 1, "验证码错误")
-
+	CaptchaInvalid  = New(Client, Captcha, 1, "验证码错误")
 	CaptchaGenerate = New(Internal, Captcha, 1, "验证码生成失败")
 )
 
@@ -81,5 +77,5 @@ var (
 	FileParse  = New(Internal, File, 3, "文件解析失败")
 	FileExport = New(Internal, File, 4, "文件导出失败")
 
-	FileUploadS3 = New(Remote, File, 1, "文件上传失败")
+	FileUploadS3 = New(Remote, File, 1, "远程文件上传失败")
 )
